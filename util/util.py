@@ -3,8 +3,8 @@ from tqdm.autonotebook import tqdm
 
 if(torch.cuda.is_available()):
     import cupy as np
-    import cupy.scipy as sp
-    from cupy.scipy.signal import convolve2d
+    import cupyx.scipy as sp
+    from cupyx.scipy.signal import convolve2d
     
 else:
     import numpy as np
