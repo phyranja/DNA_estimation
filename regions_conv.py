@@ -77,7 +77,8 @@ for mat_file in mat_files:
     
     #create polygons from mask and write them to QuPath compatile json
     all_polygons = []
-    for s, value in features.shapes(asnumpy(mask_regions).astype(np.uint8), mask_regions):
+    np_mask_regions = asnumpy(mask_regions)
+    for s, value in features.shapes(np_mask_regions.astype(np.uint8), mask_regions):
         poly = shape(s)
         all_polygons.append(poly)
 
