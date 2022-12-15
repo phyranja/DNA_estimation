@@ -2,22 +2,21 @@ import torch
 from tqdm.autonotebook import tqdm
 
 if(torch.cuda.is_available()):
-    import cupy as np
+    import cupy as xp
     import cupyx.scipy as sp
     from cupyx.scipy.signal import convolve2d
     
 else:
-    import numpy as np
+    import numpy as xp
     import scipy as sp
     from scipy.signal import convolve2d
 
 
-def hover_accumulate_instance_masks(hover_mat, id_list):
-    mask = np.zeros(hover_mat["inst_map"].shape)
-    inst_map = np.asarray(hover_mat["inst_map"])
+def hover_accumulate_instance_masks(inst_map, id_list):
+    mask = xp.zeros(inst_map.shape)
 
     for idx in tqdm(id_list):
-        mask = np.logical_or(mask, inst_map == idx)
+        mask = xp.logical_or(mask, inst_map == idx)
         
     return mask
 

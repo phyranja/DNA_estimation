@@ -5,6 +5,7 @@ import os
 import glob
 import torch
 from scipy.io import loadmat
+import numpy as np
 import cv2
 from tqdm.autonotebook import tqdm
 import time
@@ -18,12 +19,12 @@ from util.util import convolve_iter
 # +
 #not the most elegant way, should do it without torch
 if(torch.cuda.is_available()):
-    import cupy as np
+    import cupy as xp
     import cupyx.scipy as sp
     from cupyx.scipy.signal import convolve2d
     
 else:
-    import numpy as np
+    import numpy as xp
     import scipy as sp
     from scipy.signal import convolve2d
 
@@ -51,7 +52,7 @@ mat_files = glob.glob(in_dir+"mat/*.mat")
 
 # +
 #TODO: test different types of kernel, esp. gaussian
-kernel = np.ones((kernel_size,kernel_size))/(kernel_size*kernel_size)
+kernel = xp.ones((kernel_size,kernel_size))/(kernel_size*kernel_size)
 
 print(len(mat_files), "files to process")
 for mat_file in mat_files:
@@ -61,7 +62,9 @@ for mat_file in mat_files:
     
     #create mask of all cancer cells
     cancer_ids = [ mat["inst_uid"][i][0] for i in range(len(mat["inst_type"])) if mat["inst_type"][i] == inst_type]
-    mask = accumulate_masks(mat, cancer_ids)
+    inst_map = xp.asarray(mat["inst_map"]) #convert to cupy array if cupy is used
+    
+    mask = accumulate_masks(inst_map, cancer_ids)
     cv2.imwrite(out_dir + "mask/" + name + ".png", mask.astype(np.uint8)*255)
     
     mask_blurr = convolve_iter(mask, kernel, 2)
