@@ -23,6 +23,7 @@ def hover_accumulate_instance_masks(inst_map, id_list):
 def convolve_iter(img_in, kernel, iterations):
     out = img_in
     for i in tqdm(range(iterations)):
+        print(type(out), type(kernel))
         out = convolve2d(out, kernel, mode = 'same')
     
     return out
