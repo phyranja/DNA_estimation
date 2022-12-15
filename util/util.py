@@ -1,0 +1,30 @@
+import torch
+from tqdm.autonotebook import tqdm
+
+if(torch.cuda.is_available()):
+    import cupy as np
+    import cupy.scipy as sp
+    from cupy.scipy.signal import convolve2d
+    
+else:
+    import numpy as np
+    import scipy as sp
+    from scipy.signal import convolve2d
+
+
+def hover_accumulate_instance_masks(hover_mat, id_list):
+    mask = np.zeros(hover_mat["inst_map"].shape)
+
+    for idx in tqdm(id_list):
+        mask = np.logical_or(mask, hover_mat["inst_map"] == idx)
+        
+    return mask
+
+def convolve_iter(img_in, kernel, iterations):
+    out = img_in
+    for i in tqdm(range(iterations)):
+        out = convolve2d(out, kernel, mode = 'same')
+    
+    return out
+        
+    

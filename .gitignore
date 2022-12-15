@@ -1,0 +1,15 @@
+hover/
+hover_cpu/
+checkpoints/
+test/
+
+
+__pycache__/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+ 
+# Spyder project settings
+.spyderproject
+.spyproject
+
