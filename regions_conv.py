@@ -22,11 +22,13 @@ if(torch.cuda.is_available()):
     import cupy as xp
     import cupyx.scipy as sp
     from cupyx.scipy.signal import convolve2d
+    from cupy import asnumpy
     
 else:
     import numpy as xp
     import scipy as sp
     from scipy.signal import convolve2d
+    from numpy import asarray as asnumpy
 
 # +
 #TODO: make these arguments
@@ -65,17 +67,17 @@ for mat_file in mat_files:
     inst_map = xp.asarray(mat["inst_map"]) #convert to cupy array if cupy is used
     
     mask = accumulate_masks(inst_map, cancer_ids)
-    cv2.imwrite(out_dir + "mask/" + name + ".png", mask.astype(np.uint8)*255)
+    cv2.imwrite(out_dir + "mask/" + name + ".png", asnumpy(mask).astype(np.uint8)*255)
     
     mask_blurr = convolve_iter(mask, kernel, 2)
-    cv2.imwrite(out_dir + "blurr/" + name + ".png", mask_blurr*255)
+    cv2.imwrite(out_dir + "blurr/" + name + ".png", asnumpy(mask_blurr)*255)
     
     mask_regions = mask_blurr > threshold
-    cv2.imwrite(out_dir + f"blurr/{name}_t={threshold}.png", mask_blurr*255)
+    cv2.imwrite(out_dir + f"blurr/{name}_t={threshold}.png", asnumpy(mask_regions)*255)
     
     #create polygons from mask and write them to QuPath compatile json
     all_polygons = []
-    for s, value in features.shapes(mask_regions.astype(np.int16), mask_regions):
+    for s, value in features.shapes(mask_regions(mask_regions), mask_regions):
         poly = shape(s)
         all_polygons.append(poly)
 
