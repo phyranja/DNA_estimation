@@ -1,6 +1,5 @@
 
 
-import matplotlib.pyplot as plt
 import openslide
 import os
 import glob
@@ -65,12 +64,9 @@ for mat_file in mat_files:
     cv2.imwrite(out_dir + f"blurr/{name}_t={threshold}.png", mask_blurr*255)
     
     all_polygons = []
-    plt.imshow(mask_regions)
     for s, value in features.shapes(mask_regions.astype(np.int16), mask_regions):
         poly = shape(s)
         all_polygons.append(poly)
-        x,y = poly.exterior.xy
-        plt.plot(x,y)
 
     json_dicts = []
 
