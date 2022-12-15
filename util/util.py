@@ -14,9 +14,10 @@ else:
 
 def hover_accumulate_instance_masks(hover_mat, id_list):
     mask = np.zeros(hover_mat["inst_map"].shape)
+    inst_map = np.asarray(hover_mat["inst_map"])
 
     for idx in tqdm(id_list):
-        mask = np.logical_or(mask, hover_mat["inst_map"] == idx)
+        mask = np.logical_or(mask, inst_map == idx)
         
     return mask
 
