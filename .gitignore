@@ -3,6 +3,7 @@ hover_cpu/
 checkpoints/
 test/
 
+test*
 
 __pycache__/
 

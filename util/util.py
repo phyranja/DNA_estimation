@@ -5,11 +5,13 @@ if(torch.cuda.is_available()):
     import cupy as xp
     import cupyx.scipy as sp
     from cupyx.scipy.signal import convolve2d
+    from cupyx.scipy.ndimage import gaussian_filter
     
 else:
     import numpy as xp
     import scipy as sp
     from scipy.signal import convolve2d
+    from scipy.ndimage import gaussian_filter
 
 
 def hover_accumulate_instance_masks(inst_map, id_list):
@@ -27,4 +29,9 @@ def convolve_iter(img_in, kernel, iterations):
     
     return out
         
+def convolve_gaussian_iter(img_in, sigma, iterations):
+    out = img_in.astype(xp.float64)
+    for i in tqdm(range(iterations)):
+        out = gaussian_filter(out, sigma)
     
+    return out
