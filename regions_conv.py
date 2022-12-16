@@ -96,7 +96,7 @@ for mat_file in mat_files:
     mask = accumulate_masks(inst_map, cancer_ids)
     cv2.imwrite(out_dir + "mask/" + name + ".png", asnumpy(mask).astype(np.uint8)*255)
     
-    if kernel_type is "flat":
+    if kernel_type == "flat":
         mask_blurr = convolve_iter(mask, kernel, 2)
         cv2.imwrite(out_dir + f"blurr/{name}_conv_{kernel_size}.png", asnumpy(mask_blurr)*255)
 
