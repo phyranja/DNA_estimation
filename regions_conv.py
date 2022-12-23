@@ -122,6 +122,8 @@ for mat_file in mat_files:
     
     with open(out_dir + f"json/{name}_t={threshold}.json", 'w') as outfile:
         geojson.dump(json_dicts,outfile)
+        
+    
 
 # -
 
