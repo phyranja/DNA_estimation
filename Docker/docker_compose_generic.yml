@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+    vtanner_test:
+        container_name: DNA_ESTIM
+        build: .
+        volumes:
+            - /data/home/vtanner/slides_ovary/roi:/data_in
+            - /data/home/vtanner/hover_infer_out_roi/run3:/out
+            - /home/vtanner/DNA_estimation:/code
+            - /data/home/vtanner/nets:/checkpoints
+        restart: "no"
+        command: python run_estim.py

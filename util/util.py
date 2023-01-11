@@ -3,6 +3,7 @@ from tqdm.autonotebook import tqdm
 import openslide
 from imageio import imwrite
 import os
+import itertools
 
 if(torch.cuda.is_available()):
     import cupy as xp
@@ -50,12 +51,17 @@ def get_tile(osh, openslide_level, tile_size,  padding, y, x):
                            (tilesize + 2 * paddingsize, tilesize + 2 * paddingsize))
     return tile
 
+    
+    
+    
 def save_wsi_tiles(osh, tile_size, padding, save_folder, force_rewrite = False):
     #save folder needs to identify wsi, only coordinates are saved in filename
     nrow,ncol = osh.level_dimensions[0]
 
-    for i in range(0, ncol, tile_size):
-        for j in range(0, nrow, tile_size):
+    for i, j in tqdm(list(itertools.product(range(0, ncol, tile_size),
+                                  range(0, nrow, tile_size)))):
+#    for i in range(0, ncol, tile_size):
+#        for j in range(0, nrow, tile_size):
             tile_name = f"{save_folder}/x={j}_y={i}_ts={tile_size}.png"
             if not os.path.exists(tile_name):
                 tile = osh.read_region((j, i), 0, (tile_size + padding, tile_size + padding))

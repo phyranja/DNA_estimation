@@ -3,8 +3,9 @@ import os
 import glob
 import subprocess
 
-from tqdm.autonotebook import tqdm
+from tqdm import tqdm
 import re
+from datetime import datetime
 
 import openslide
 from paquo.images import QuPathImageType
@@ -20,8 +21,12 @@ import util.util as util
 #setup arguments
 
 run_tiles = True
-in_dir = "/home/vita/Documents/Digital_Pathology/Project/data/slide_in_test"
-out_dir = "/home/vita/Documents/Digital_Pathology/Project/out/estim_test_out"
+#in_dir = "/home/vita/Documents/Digital_Pathology/Project/data/slide_in_test"
+#out_dir = "/home/vita/Documents/Digital_Pathology/Project/out/estim_test_out"
+in_dir = "../data_in"
+out_dir = "../out"
+
+
 save_masks = True
 save_blurred_masks = True
 
@@ -34,7 +39,7 @@ pred_gridsize = 200
 
 gpu_id = '0,1'
 hover_batch_size = 64
-hover_model_path = "checkpoints/hovernet_fast_pannuke_type_tf2pytorch.tar"
+hover_model_path = "../checkpoints/hovernet_fast_pannuke_type_tf2pytorch.tar"
 hover_infer_workers = 4
 hover_post_worers = 4
 
@@ -43,6 +48,14 @@ hover_class = 1 # cell type of interest
 
 
 # +
+#gather files
+wsi_path_list = glob.glob(in_dir + "/*")
+wsi_path_list.sort()
+
+if len(wsi_path_list) == 0:
+    print(f"no files found in {in_dir}.")
+    
+
 #setup out dirs
 
 if save_masks and not os.path.exists(out_dir+"/mask"):
@@ -52,14 +65,13 @@ if save_blurred_masks and not os.path.exists(out_dir+"/blurr"):
 if not os.path.exists(out_dir+"/qupath"):
     os.makedirs(out_dir+"/qupath")
     
-#gather files
-wsi_path_list = glob.glob(in_dir + "/*")
-wsi_path_list.sort()
+
 # -
 
 #save tiles if applicable
 if run_tiles:
     for path in wsi_path_list:
+        print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: generating tiles for {os.path.basename(path)}")
         osh = openslide.OpenSlide(path)
         wsi_name = os.path.splitext(os.path.basename(path))[0]
         tile_dir_path = out_dir + "/tiles/" + wsi_name
@@ -70,11 +82,11 @@ if run_tiles:
         #todo, check if already exists, if yes, skip
         util.save_wsi_tiles(osh, tile_size, padding, tile_dir_path)
 
-# +
 #run hovernet inference
 #todo, check if already exists
 if run_tiles:
     for path in wsi_path_list:
+        print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: running inference on tiles for {os.path.basename(path)}")
         wsi_name = os.path.splitext(os.path.basename(path))[0]
         tile_dir_path = out_dir + "/tiles/" + wsi_name
         hover_dir_path = out_dir + "/hover/" + wsi_name
@@ -98,11 +110,11 @@ if run_tiles:
             for line in proc.stderr:
                 print("hover:", line)
 
-        
 
-# +
+
 #setup instance masks and blurred masks
 for path in wsi_path_list:
+    print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: generating and blurring masks for {os.path.basename(path)}")
     wsi_name = os.path.splitext(os.path.basename(path))[0]
     hover_out_path = out_dir + "/hover/" + wsi_name
     mat_files = glob.glob(hover_out_path+"/mat/*.mat")
@@ -130,7 +142,7 @@ for path in wsi_path_list:
             mask_blurr = convolve_gaussian_iter(mask, gauss_sigma, 2)
             cv2.imwrite(blurr_dir_path + f"/{name}_gauss_{gauss_sigma}.png", mask_blurr*255)
             
-            
+
 
 # +
 import itertools
@@ -156,7 +168,7 @@ with QuPathProject(out_dir + "/qupath", mode='x') as qp:
     
     
 
-    print("created project", qp.name)
+    print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Creating QuPath project", qp.name)
     
     for path in wsi_path_list:
         
@@ -194,5 +206,6 @@ with QuPathProject(out_dir + "/qupath", mode='x') as qp:
                     detection = entry.hierarchy.add_tile(roi=tile, measurements=
                                                      {'tumor cell density': np.mean(im[y+crop:y+crop+tile_size, x+crop:x+crop + tile_size])})
         
-        print("added", len(entry.hierarchy.detections), "tiles")
+        print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
+print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: done")
 
