@@ -14,8 +14,14 @@ from paquo.projects import QuPathProject
 from scipy.io import loadmat
 from imageio import imread
 from imageio import imwrite
+import numpy as np
+from scipy.ndimage import generate_binary_structure
 
 import util.util as util
+from extract_tiles import extract_tiles_wsi_dir
+from generate_masks import generate_masks
+from blurr_masks import blurr_masks_flat
+from generate_qupath import qupath_from_tile_masks
 
 # +
 #setup arguments
@@ -30,7 +36,7 @@ out_dir = "../out"
 save_masks = True
 save_blurred_masks = True
 
-tile_size = 5000
+tile_size = 2000
 padding = 500
 
 
@@ -46,10 +52,17 @@ hover_post_worers = 4
 hover_num_classes = 6
 hover_class = 1 # cell type of interest
 
+kernel_rad = 100
+d = np.array(range(0 - kernel_rad, kernel_rad + 1))**2
+k = np.tile(d, (len(d), 1))
+k2 = k + k.transpose()
+kernel = (k2 <= kernel_rad**2).astype(int)
+
 
 # +
 #gather files
-wsi_path_list = glob.glob(in_dir + "/*")
+path_list = glob.glob(in_dir + "/*")
+wsi_path_list = [p for p in path_list if os.path.isfile(p)]
 wsi_path_list.sort()
 
 if len(wsi_path_list) == 0:
@@ -70,23 +83,13 @@ if not os.path.exists(out_dir+"/qupath"):
 
 #save tiles if applicable
 if run_tiles:
-    for path in wsi_path_list:
-        print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: generating tiles for {os.path.basename(path)}")
-        osh = openslide.OpenSlide(path)
-        wsi_name = os.path.splitext(os.path.basename(path))[0]
-        tile_dir_path = out_dir + "/tiles/" + wsi_name
-        
-        if not os.path.exists(tile_dir_path):
-            os.makedirs(tile_dir_path)
-            
-        #todo, check if already exists, if yes, skip
-        util.save_wsi_tiles(osh, tile_size, padding, tile_dir_path)
+    extract_tiles_wsi_dir(in_dir, out_dir, tile_size, padding)
 
 #run hovernet inference
 #todo, check if already exists
 if run_tiles:
     for path in wsi_path_list:
-        print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: running inference on tiles for {os.path.basename(path)}")
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: running inference on tiles for {os.path.basename(path)}", flush=True)
         wsi_name = os.path.splitext(os.path.basename(path))[0]
         tile_dir_path = out_dir + "/tiles/" + wsi_name
         hover_dir_path = out_dir + "/hover/" + wsi_name
@@ -112,100 +115,33 @@ if run_tiles:
 
 
 
-#setup instance masks and blurred masks
+#setup instance masks
 for path in wsi_path_list:
-    print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: generating and blurring masks for {os.path.basename(path)}")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: generating masks for {os.path.basename(path)}", flush=True)
     wsi_name = os.path.splitext(os.path.basename(path))[0]
-    hover_out_path = out_dir + "/hover/" + wsi_name
-    mat_files = glob.glob(hover_out_path+"/mat/*.mat")
-    
-
-    print("Accumulating masks for "+ wsi_name)
+    hover_out_path = out_dir + "/hover/" + wsi_name + "/mat"
     mask_dir_path = out_dir + "/mask/" + wsi_name
-    blurr_dir_path = out_dir + "/blurr/" + wsi_name
     
-    for mat_file in tqdm(mat_files):
-        name = os.path.basename(mat_file)
-        mat = loadmat(mat_file)
-        
-        
-        #create mask of all cancer cells
-        cancer_ids = [ mat["inst_uid"][i][0] for i in range(len(mat["inst_type"])) if mat["inst_type"][i] == hover_class]
-        mask = accumulate_masks(inst_map, cancer_ids)
-        cv2.imwrite(mask_dir_path + "/" + name, mask.astype(np.uint8)*255)
-    
-        if kernel_type == "flat":
-            mask_blurr = convolve_iter(mask, kernel, 2)
-            cv2.imwrite(blurr_dir_path + f"/{name}_conv_{kernel_size}.png", mask_blurr*255)
+    generate_masks(hover_out_path, mask_dir_path, hover_class)
 
-        else:
-            mask_blurr = convolve_gaussian_iter(mask, gauss_sigma, 2)
-            cv2.imwrite(blurr_dir_path + f"/{name}_gauss_{gauss_sigma}.png", mask_blurr*255)
+# blurr masks
+for path in wsi_path_list:
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: blurring masks for {os.path.basename(path)}", flush=True)
+    wsi_name = os.path.splitext(os.path.basename(path))[0]
+    mask_dir_path = out_dir + "/mask/" + wsi_name
+    blurr_dir_path = out_dir + f"/blurr_{kernel_rad}/" + wsi_name
+    
+    if not os.path.exists(blurr_dir_path):
+            os.makedirs(blurr_dir_path)
+            
+    blurr_masks_flat(mask_dir_path, blurr_dir_path, kernel_rad)
             
 
 
-# +
-import itertools
-from typing import Tuple, Iterator
-from tqdm.autonotebook import tqdm
+blurr_dir = out_dir + f"/blurr_{kernel_rad}/"
+qupath_out_dir = out_dir + "/qupath"
+if not os.path.exists(qupath_out_dir):
+    os.makedirs(qupath_out_dir)
+qupath_from_tile_masks(in_dir, blurr_dir, qupath_out_dir, tile_size, padding, pred_gridsize)
 
-def iterate_grid(width, height, step) -> Iterator[Tuple[int, int]]:
-
-    yield from itertools.product(
-
-        range(0, width, step),
-
-        range(0, height, step)
-
-    )
-
-
-crop = int(padding/2)
-
-
-
-with QuPathProject(out_dir + "/qupath", mode='x') as qp:
-    
-    
-
-    print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Creating QuPath project", qp.name)
-    
-    for path in wsi_path_list:
-        
-        wsi_name = os.path.splitext(os.path.basename(path))[0]
-        
-        entry = qp.add_image(path, image_type=QuPathImageType.BRIGHTFIELD_H_E)
-        
-        blurr_files = glob.glob(out_dir + "/blurr/" + wsi_name + "/*.png")
-    
-    
-        for file in tqdm(blurr_files):
-            im = imread(file)
-            hight, width = im.shape
-        
-            
-            mx = re.search('x=(\d+)_', os.path.basename(file))
-            offset_x=int(mx.group(1))
-            my = re.search('_y=(\d+)_', os.path.basename(file))
-            offset_y=int(my.group(1))
-            mt = re.search('_ts=(\d+).', os.path.basename(file))
-            file_tile_size=int(mt.group(1))
-            if file_tile_size != tile_size:
-                continue
-        
-
-            for x, y in iterate_grid(width-padding, hight-padding, tile_size):
-        
-                if np.mean(im[y+crop:y+crop+tile_size, x+crop:x+crop + tile_size]) > 0:
-            
-                    tile = Polygon.from_bounds(x + crop + offset_x, y + crop + offset_y,
-                                x + crop + offset_x + tile_size, y + crop + offset_y + tile_size)
-
-                    # add tiles (tiles are specialized detection objects drawn without border)
-
-                    detection = entry.hierarchy.add_tile(roi=tile, measurements=
-                                                     {'tumor cell density': np.mean(im[y+crop:y+crop+tile_size, x+crop:x+crop + tile_size])})
-        
-        print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
-print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: done")
 

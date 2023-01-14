@@ -1,7 +1,7 @@
 import torch
-from tqdm.autonotebook import tqdm
+from tqdm import tqdm
 import openslide
-from imageio import imwrite
+from cv2 import imwrite
 import os
 import itertools
 
@@ -25,23 +25,19 @@ def hover_accumulate_instance_masks(inst_map, id_list):
     
     mask = xp.zeros(inst_map.shape)
 
-    for idx in tqdm(id_list):
+    for idx in id_list:
         mask = xp.logical_or(mask, xp_map == idx)
         
     return asnumpy(mask)
 
-def convolve_iter(img_in, kernel, iterations):
+def convolve(img_in, kernel):
     out = xp.asarray(img_in).astype(xp.float64)
-    for i in tqdm(range(iterations)):
-        out = convolve2d(out, kernel, mode = 'same')
-    
+    out = convolve2d(out, kernel, mode = 'same')
     return asnumpy(out)
         
-def convolve_gaussian_iter(img_in, sigma, iterations):
+def convolve_gaussian(img_in, sigma):
     out = xp.asarray(img_in).astype(xp.float64)
-    for i in tqdm(range(iterations)):
-        out = gaussian_filter(out, sigma)
-    
+    out = gaussian_filter(out, sigma)
     return asnumpy(out)
 
 
@@ -63,6 +59,8 @@ def save_wsi_tiles(osh, tile_size, padding, save_folder, force_rewrite = False):
 #    for i in range(0, ncol, tile_size):
 #        for j in range(0, nrow, tile_size):
             tile_name = f"{save_folder}/x={j}_y={i}_ts={tile_size}.png"
-            if not os.path.exists(tile_name):
-                tile = osh.read_region((j, i), 0, (tile_size + padding, tile_size + padding))
-                imwrite(tile_name, tile)
+            if not os.path.exists(tile_name) or force_rewrite:
+                tile = osh.read_region((j, i), 0, (tile_size + padding,
+                                                   tile_size + padding))
+                imwrite(tile_name, asnumpy(tile))
+                del tile
