@@ -22,7 +22,7 @@ RUN apt-get update --fix-missing && \
     rm -rf /var/lib/apt/lists/*
     
     
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-4.5.4-Linux-x86_64.sh -O ~/miniconda.sh && \
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh && \
     /opt/conda/bin/conda clean -tipsy && \
@@ -40,6 +40,7 @@ RUN git clone --recurse-submodules https://github.com/phyranja/DNA_estimation.gi
 WORKDIR /DNA_estimation
 RUN ls hover_net
 
+
 #RUN conda env create -f environment.yml
 #RUN conda activate hovernet
 #RUN apt-get install openslide-tools
@@ -48,16 +49,19 @@ RUN pip install protobuf==3.19.6
 RUN pip install pillow==8.4
 RUN pip install -r hover_net/requirements.txt
 RUN pip install openslide-python==1.1.2
+RUN pip install torch==1.6.0 torchvision==0.7.0
+RUN pip install cupy-cuda102
+RUN pip install opencv-python
+RUN pip install shapely
 RUN pip install geojson
 RUN pip install paquo
-ARG x=2
-RUN paquo --version
-RUN ls
-RUN paquo get_qupath --install-path ./some-directory 0.3.2
+RUN paquo get_qupath --install-path /opt 0.3.2
+
+ARG x=1
 
 #RUN pip install openslide-python==1.1.2
 #RUN pip install torch==1.6.0 torchvision==0.7.0
 
 
-#CMD ["./hover_infer.sh"]
-CMD ["python run_estim.py"]
+COPY run_estim.py .
+CMD ["python","run_estim.py"]
