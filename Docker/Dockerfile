@@ -20,6 +20,7 @@ RUN apt-get update --fix-missing && \
     apt-get install -y openslide-tools && \
     apt-get install -y libjpeg-dev zlib1g-dev &&\
     rm -rf /var/lib/apt/lists/*
+
     
     
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh -O ~/miniconda.sh && \
@@ -33,12 +34,7 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linu
 ENV PATH /opt/conda/bin:$PATH
 #ENV LD_LIBRARY_PATH /usr/local/cuda-11.8.0/lib64:/usr/local/cuda-11.8.0/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 #ENV LD_LIBRARY_PATH /usr/local/cuda-9.0/lib64:/usr/local/cuda-9.0/extras/CUPTI/lib64:$LD_LIBRARY_PATH
-
-#RUN git clone https://github.com/simongraham/hovernet_inference.git
-#WORKDIR /hovernet_inference
-RUN git clone --recurse-submodules https://github.com/phyranja/DNA_estimation.git
-WORKDIR /DNA_estimation
-RUN ls hover_net
+ENV LD_LIBRARY_PATH /usr/local/cuda-10.2/lib64:/usr/local/cuda-10.2/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 
 
 #RUN conda env create -f environment.yml
@@ -47,10 +43,6 @@ RUN ls hover_net
 RUN pip install --upgrade pip
 RUN pip install protobuf==3.19.6
 RUN pip install pillow==8.4
-RUN pip install -r hover_net/requirements.txt
-RUN pip install openslide-python==1.1.2
-RUN pip install torch==1.6.0 torchvision==0.7.0
-RUN pip install cupy-cuda102
 RUN pip install opencv-python
 RUN pip install shapely
 RUN pip install geojson
@@ -59,9 +51,17 @@ RUN paquo get_qupath --install-path /opt 0.3.2
 
 ARG x=1
 
-#RUN pip install openslide-python==1.1.2
-#RUN pip install torch==1.6.0 torchvision==0.7.0
+RUN git clone --recurse-submodules https://github.com/phyranja/DNA_estimation.git
+WORKDIR /DNA_estimation
+RUN ls hover_net
 
+RUN pip install -r hover_net/requirements.txt
+RUN pip install openslide-python==1.1.2
+RUN pip install torch==1.6.0 torchvision==0.7.0
+RUN pip install numpy==1.23.1
+
+
+ARG y=2
 
 COPY run_estim.py .
 CMD ["python","run_estim.py"]

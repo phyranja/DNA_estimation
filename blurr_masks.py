@@ -44,7 +44,7 @@ def blurr_masks_gauss(in_dir, out_dir, sigma):
 if __name__ == '__main__':
     #setup arguments
 
-    kernel_radius = 50
+    kernel_radius = 200
     wsi_in_dir = "../data_in"
     out_dir = "../out"
 

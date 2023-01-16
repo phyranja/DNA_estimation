@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     pred_gridsize = 200
 
-    kernel_rad = 50
+    kernel_rad = 200
     
     blurr_dir = out_dir + f"/blurr_{kernel_rad}/"
     qupath_out_dir = out_dir + "/qupath"
