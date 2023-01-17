@@ -21,6 +21,7 @@ def blurr_masks_flat(in_dir, out_dir, radius):
     k = np.tile(d, (len(d), 1))
     k2 = k + k.transpose()
     kernel = (k2 <= radius**2).astype(int)
+    kernel = kernel/np.sum(kernel)
     
     for mask_file in tqdm(mask_files):
         name = os.path.basename(mask_file)

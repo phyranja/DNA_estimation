@@ -64,5 +64,5 @@ RUN pip install cupy-cuda102
 
 ARG y=2
 
-COPY run_estim.sh .
+#COPY run_estim.sh .
 CMD ./run_estim.sh
