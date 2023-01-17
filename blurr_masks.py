@@ -25,7 +25,7 @@ def blurr_masks_flat(in_dir, out_dir, radius):
     
     for mask_file in tqdm(mask_files):
         name = os.path.basename(mask_file)
-        mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
+        mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)/255
         
         mask_blurr = util.convolve(mask, kernel)
         cv2.imwrite(out_dir + "/" + name, mask_blurr)
