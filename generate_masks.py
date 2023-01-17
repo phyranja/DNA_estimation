@@ -1,6 +1,7 @@
 # +
 import os
 import glob
+import configargparse
 
 from tqdm import tqdm
 from datetime import datetime
@@ -29,11 +30,13 @@ def generate_masks(in_dir, out_dir, type_id):
         cancer_ids = [ mat["inst_uid"][i][0] for i in range(len(mat["inst_type"])) if mat["inst_type"][i] == type_id]
         mask = util.hover_accumulate_instance_masks(mat["inst_map"], cancer_ids)
         imwrite(out_dir + "/" + name +".png", mask.astype(np.uint8)*255)
-        
+
 
 
 if __name__ == '__main__':
     #setup arguments
+    
+    
 
     wsi_in_dir = "../data_in"
     out_dir = "../out"

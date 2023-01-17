@@ -18,11 +18,12 @@ for f in "$in_dir"/*; do
             --gpu=0 \
             --nr_types=6 \
             --type_info_path=hover_net/type_info.json \
-            --batch_size=64 \
+            --batch_size=16 \
             --model_mode=fast \
             --model_path=../checkpoints/hovernet_fast_pannuke_type_tf2pytorch.tar \
-            --nr_inference_workers=4 \
-            --nr_post_proc_workers=4 \
+            --nr_inference_workers=2 \
+            --nr_post_proc_workers=2
+            \
             tile \
             --input_dir="$tile_dir" \
             --output_dir="$hover_out_dir" \

@@ -31,8 +31,9 @@ def hover_accumulate_instance_masks(inst_map, id_list):
     return asnumpy(mask)
 
 def convolve(img_in, kernel):
+    kernel_xp = xp.asarray(kernel)
     out = xp.asarray(img_in).astype(xp.float64)
-    out = convolve2d(out, kernel, mode = 'same')
+    out = convolve2d(out, kernel_xp, mode = 'same')
     return asnumpy(out)
         
 def convolve_gaussian(img_in, sigma):
