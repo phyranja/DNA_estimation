@@ -60,6 +60,7 @@ RUN pip install openslide-python==1.1.2
 RUN pip install torch==1.6.0 torchvision==0.7.0
 RUN pip install numpy==1.23.1
 RUN pip install cupy-cuda102
+RUN pip install configargparse
 
 
 ARG y=2

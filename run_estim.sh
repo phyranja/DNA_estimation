@@ -5,6 +5,8 @@ out_dir=../out
 
 python extract_tiles.py
 
+#: <<'END'
+
 for f in "$in_dir"/*; do
     if [ -f "$f" ]; then
         filename=$(basename -- "$f")
@@ -30,6 +32,9 @@ for f in "$in_dir"/*; do
             --mem_usage=0.1
     fi
 done
+
+#END
+
 
 python generate_masks.py
 python blurr_masks.py

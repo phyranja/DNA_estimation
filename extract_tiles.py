@@ -8,6 +8,7 @@ from datetime import datetime
 
 import openslide
 import util.util as util
+import util.args as argparser
 
 
 # -
@@ -45,11 +46,20 @@ def extract_tiles_wsi_dir(in_dir, out_dir, tile_size, pad_size):
 if __name__ == '__main__':
     #setup arguments
 
-    in_dir = "../data_in"
-    out_dir = "../out"
+    #in_dir = "../data_in"
+    #out_dir = "../out"
+    #tile_size = 2000
+    #padding = 500
+    
+    args = argparser.parse_args()
+    
+    in_dir = args.in_dir
+    out_dir = args.out_dir
+    
+    tile_size = args.tile_size
+    padding = args.padding_size
 
-    tile_size = 2000
-    padding = 500
+    
     extract_tiles_wsi_dir(in_dir, out_dir, tile_size, padding)
 
 

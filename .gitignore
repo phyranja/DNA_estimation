@@ -14,3 +14,8 @@ __pycache__/
 .spyderproject
 .spyproject
 
+#don't push nextflow for now
+
+*nextflow*
+*.nf
+

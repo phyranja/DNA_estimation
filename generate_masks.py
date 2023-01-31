@@ -1,7 +1,6 @@
 # +
 import os
 import glob
-import configargparse
 
 from tqdm import tqdm
 from datetime import datetime

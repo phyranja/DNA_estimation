@@ -1,7 +1,6 @@
 # +
 import os
 import glob
-import 
 
 from tqdm import tqdm
 from datetime import datetime
@@ -54,8 +53,8 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
                     continue
         
 
-                for x, y in tqdm(list(itertools.product(range(0, width-padding, grid_size),
-                                                                    range(0, hight-padding, grid_size)))):
+                for y, x in itertools.product(range(0, width-padding, grid_size),
+                                                range(0, hight-padding, grid_size)):
         
                     if np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size]) > 0:
             
@@ -65,7 +64,7 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
                         # add tiles (tiles are specialized detection objects drawn without border)
 
                         detection = entry.hierarchy.add_tile(roi=tile, measurements=
-                                                     {'tumor cell density': np.mean(im[y+crop:y+crop+tile_size, x+crop:x+crop + tile_size])})
+                                                     {'tumor cell density': np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size])})
         
             print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
 
@@ -75,8 +74,11 @@ if __name__ == '__main__':
     #setup arguments
 
     run_tiles = True
-    in_dir = "../data_in"
-    out_dir = "../out"
+    #in_dir = "../data_in"
+    #out_dir = "../out"
+    
+    in_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/slides_in"
+    out_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/out"
     
     
 
@@ -84,12 +86,12 @@ if __name__ == '__main__':
     padding = 500
 
 
-    pred_gridsize = 200
+    pred_gridsize = 1000
 
     kernel_rad = 200
     
     blurr_dir = out_dir + f"/blurr_{kernel_rad}/"
-    qupath_out_dir = out_dir + "/qupath"
+    qupath_out_dir = out_dir + f"/qupath_{pred_gridsize}"
     if not os.path.exists(qupath_out_dir):
         os.makedirs(qupath_out_dir)
     
