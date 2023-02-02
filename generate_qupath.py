@@ -14,6 +14,8 @@ import re
 import numpy as np
 from shapely.geometry import Polygon
 
+import util.args as argparser
+
 
 # -
 
@@ -77,18 +79,24 @@ if __name__ == '__main__':
     #in_dir = "../data_in"
     #out_dir = "../out"
     
-    in_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/slides_in"
-    out_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/out"
+    args = argparser.parse_args()
     
+    in_dir = args.in_dir
+    out_dir = args.out_dir
     
+    tile_size = args.tile_size
+    padding = args.padding_size
+    
+    pred_gridsize = args.measurement_grid_size
 
-    tile_size = 2000
-    padding = 500
-
-
-    pred_gridsize = 1000
-
-    kernel_rad = 200
+    kernel_rad = args.blurr_flat_rad
+    
+    #in_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/slides_in"
+    #out_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/out"
+    #tile_size = 2000
+    #padding = 500
+    #pred_gridsize = 1000
+    #kernel_rad = 200
     
     blurr_dir = out_dir + f"/blurr_{kernel_rad}/"
     qupath_out_dir = out_dir + f"/qupath_{pred_gridsize}"

@@ -11,6 +11,7 @@ from cv2 import imwrite
 import numpy as np
 
 import util.util as util
+import util.args as argparser
 # -
 
 
@@ -35,12 +36,12 @@ def generate_masks(in_dir, out_dir, type_id):
 if __name__ == '__main__':
     #setup arguments
     
+    args = argparser.parse_args()
     
+    wsi_in_dir = args.in_dir
+    out_dir = args.out_dir
 
-    wsi_in_dir = "../data_in"
-    out_dir = "../out"
-
-    hover_class_id = 1
+    hover_class_id = args.hover_class
 
     #gather files
     path_list = glob.glob(wsi_in_dir + "/*")

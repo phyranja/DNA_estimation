@@ -3,7 +3,7 @@
 in_dir=../data_in
 out_dir=../out
 
-python extract_tiles.py
+python extract_tiles.py -c estim_config.conf
 
 #: <<'END'
 
@@ -24,8 +24,7 @@ for f in "$in_dir"/*; do
             --model_mode=fast \
             --model_path=../checkpoints/hovernet_fast_pannuke_type_tf2pytorch.tar \
             --nr_inference_workers=2 \
-            --nr_post_proc_workers=2
-            \
+            --nr_post_proc_workers=2 \
             tile \
             --input_dir="$tile_dir" \
             --output_dir="$hover_out_dir" \
@@ -36,8 +35,8 @@ done
 #END
 
 
-python generate_masks.py
-python blurr_masks.py
-python generate_qupath.py
+python generate_masks.py -c estim_config.conf
+python blurr_masks.py -c estim_config.conf
+python generate_qupath.py -c estim_config.conf
 
 echo \done

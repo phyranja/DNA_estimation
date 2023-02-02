@@ -11,6 +11,7 @@ import imageio
 import numpy as np
 
 import util.util as util
+import util.args as argparser
 
 
 # -
@@ -44,10 +45,17 @@ def blurr_masks_gauss(in_dir, out_dir, sigma):
 
 if __name__ == '__main__':
     #setup arguments
-
-    kernel_radius = 200
-    wsi_in_dir = "../data_in"
-    out_dir = "../out"
+    
+    args = argparser.parse_args()
+    
+    wsi_in_dir = args.in_dir
+    out_dir = args.out_dir
+    
+    kernel_radius = args.blurr_flat_rad
+    
+    #kernel_radius = 200
+    #wsi_in_dir = "../data_in"
+    #out_dir = "../out"
 
     #gather files
     path_list = glob.glob(wsi_in_dir + "/*")

@@ -34,10 +34,14 @@ def parse_args():
     parser.add_argument('--mem_usage', help="percentage of memory each hovernet worker is allowed to use",
                         default=0.1, type=float)
     
+    #mask generation
+    
+    parser.add_argument('--hover_class', help="Id of hovernet class of interest",
+                        default=1, type=int)
     
     #blurring
     parser.add_argument('--blurr_flat_rad', help="pixel radius of flat kernel",
-                        default=200, type=str)
+                        default=200, type=int)
     
     
     #QuPath
