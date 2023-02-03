@@ -66,7 +66,7 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
                         # add tiles (tiles are specialized detection objects drawn without border)
 
                         detection = entry.hierarchy.add_tile(roi=tile, measurements=
-                                                     {'tumor cell density': np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size])})
+                                                     {'tumor cell density': np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size]/255)})
         
             print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
 

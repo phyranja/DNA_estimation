@@ -4,6 +4,7 @@ import openslide
 from cv2 import imwrite
 import os
 import itertools
+import math
 
 if(torch.cuda.is_available()):
     import cupy as xp
@@ -20,13 +21,23 @@ else:
     from numpy import asarray as asnumpy
 
 
-def hover_accumulate_instance_masks(inst_map, id_list):
+def hover_accumulate_instance_masks_area(inst_map, id_list):
     xp_map = xp.asarray(inst_map) #convert to cupy array if used
     
     mask = xp.zeros(inst_map.shape)
 
     for idx in id_list:
         mask = xp.logical_or(mask, xp_map == idx)
+        
+    return asnumpy(mask)
+
+def hover_accumulate_instance_masks_center(center_list, out_shape, id_list):
+    #convert to cupy array if used
+    mask = xp.zeros(out_shape)
+
+    for idx in id_list:
+        center = center_list[idx-1]
+        mask[math.floor(center[1]), math.floor(center[0])] = 1
         
     return asnumpy(mask)
 
