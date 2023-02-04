@@ -24,7 +24,7 @@ def generate_masks(in_dir, out_dir, type_id):
     for mat_file in tqdm(mat_files):
         name = os.path.basename(mat_file)
         mat = loadmat(mat_file)
-        print(mat)
+        #print(mat)
         
         #create mask of all cancer cells
         cancer_ids = [ mat["inst_uid"][i][0] for i in range(len(mat["inst_type"])) if mat["inst_type"][i] == type_id]
