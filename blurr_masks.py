@@ -15,7 +15,7 @@ import util.args as argparser
 
 
 # -
-def blurr_masks_flat(in_dir, out_dir, radius):
+def blurr_masks_flat(in_dir, out_dir, radius, force_rewrite = False):
     mask_files = glob.glob(in_dir+"/*.png")
     
     d = np.array(range(0 - radius, radius + 1))**2
@@ -26,10 +26,13 @@ def blurr_masks_flat(in_dir, out_dir, radius):
     
     for mask_file in tqdm(mask_files):
         name = os.path.basename(mask_file)
-        mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
         
-        mask_blurr = util.convolve(mask, kernel)
-        cv2.imwrite(out_dir + "/" + name, mask_blurr)
+        blurr_name = out_dir + "/" + name
+        if not os.path.exists(blurr_name) or force_rewrite:
+            mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
+        
+            mask_blurr = util.convolve(mask, kernel)
+            cv2.imwrite(blurr_name, mask_blurr)
 
 
 def blurr_masks_gauss(in_dir, out_dir, sigma):

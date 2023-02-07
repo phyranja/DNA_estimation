@@ -18,18 +18,20 @@ import util.args as argparser
 
 
 
-def generate_masks(in_dir, out_dir, type_id):
+def generate_masks(in_dir, out_dir, type_id, force_rewrite = False):
     mat_files = glob.glob(in_dir+"/*.mat")
     
     for mat_file in tqdm(mat_files):
-        name = os.path.basename(mat_file)
-        mat = loadmat(mat_file)
-        #print(mat)
         
-        #create mask of all cancer cells
-        cancer_ids = [ mat["inst_uid"][i][0] for i in range(len(mat["inst_type"])) if mat["inst_type"][i] == type_id]
-        mask = util.hover_accumulate_instance_masks_area(mat["inst_map"], cancer_ids)
-        imwrite(out_dir + "/" + name +".png", mask.astype(np.uint8)*255)
+        name = os.path.basename(mat_file)
+        mask_name = out_dir + "/" + name +".png"
+        if not os.path.exists(mask_name) or force_rewrite:
+            mat = loadmat(mat_file)
+        
+            #create mask of all cancer cells
+            cancer_ids = [ mat["inst_uid"][i][0] for i in range(len(mat["inst_type"])) if mat["inst_type"][i] == type_id]
+            mask = util.hover_accumulate_instance_masks_area(mat["inst_map"], cancer_ids)
+            imwrite(mask_name, mask.astype(np.uint8)*255)
 
 
 
