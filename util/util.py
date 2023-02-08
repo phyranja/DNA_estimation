@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 import openslide
-from cv2 import imwrite
+import cv2
 import os
 import itertools
 import math
@@ -74,5 +74,5 @@ def save_wsi_tiles(osh, tile_size, padding, save_folder, force_rewrite = False):
             if not os.path.exists(tile_name) or force_rewrite:
                 tile = osh.read_region((j, i), 0, (tile_size + padding,
                                                    tile_size + padding))
-                imwrite(tile_name, asnumpy(tile))
+                cv2.imwrite(tile_name, cv2.cvtColor(asnumpy(tile), cv2.COLOR_RGB2BGR))
                 del tile
