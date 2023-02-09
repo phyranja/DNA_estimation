@@ -8,6 +8,9 @@ def parse_args():
     #possibility to enter arguments via config file
     parser.add_argument('-c', '--config', is_config_file=True, help='config file path')
     
+    #general
+    parser.add_argument('--use_tiles', help="compute on tiles or directly on wsi?",
+                        default=False, type=bool)
     #IO
     parser.add_argument('--in_dir', help="input directory of WSI files",
                         required=True, type=str)
@@ -39,9 +42,11 @@ def parse_args():
     parser.add_argument('--hover_class', help="Id of hovernet class of interest",
                         default=1, type=int)
     
-    #blurring
+    #measurment radius
     parser.add_argument('--blurr_flat_rad', help="pixel radius of flat kernel",
                         default=200, type=int)
+    parser.add_argument('--count_rad', help="pixel radius for cell counting",
+                        default=1000, type=int)
     
     
     #QuPath

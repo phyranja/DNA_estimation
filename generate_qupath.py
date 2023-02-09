@@ -12,13 +12,17 @@ import cv2
 import itertools
 import re
 import numpy as np
+from math import ceil
+import ijson
 from shapely.geometry import Polygon
+from shapely.strtree import STRtree
+from shapely.geometry import Point
+
 
 import util.args as argparser
 
 
-# -
-
+# +
 def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding, grid_size):
 
     crop = int(padding/2)
@@ -69,40 +73,107 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
                                                      {'tumor cell density': np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size]/255)})
         
             print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
+            
+            
 
+# +
+def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, measure_rad):
+    
+    with QuPathProject(out_dir, mode='w') as qp:
+    
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Creating QuPath project", qp.name, flush=True)
+    
+        path_list = glob.glob(wsi_dir + "/*")
+        wsi_path_list = [p for p in path_list if os.path.isfile(p)]
+        wsi_path_list.sort()
+        center_offset = ceil(grid_size/2)
+        
+        for path in wsi_path_list:
+            print(path)
+        
+            wsi_name = os.path.splitext(os.path.basename(path))[0]
+        
+            entry = qp.add_image(path, image_type=QuPathImageType.BRIGHTFIELD_H_E)
+        
+            json_file = hover_dir + "/json/" + wsi_name + ".json"
+            
+            
+            with open(json_file) as f:
+                items = ijson.kvitems(f, "nuc")
+                cancer_centers = []
+                
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: collecting cells...")
+                for k, v in items:
+                    if v["type"] == 1:
+                        #print(k, v["type"],v["centroid"])
+                        cancer_centers.append(Point(v["centroid"]))
+                print(f"found {len(cancer_centers)} tumor cells")
+                
+                
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: building searchtree...")
+                tree = STRtree(cancer_centers)
+                
+                
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: generating measurement")
+                
+                for x, y in tqdm(list(itertools.product(range(0, entry.width, grid_size),
+                                                range(0, entry.height, grid_size)))):
+                    
+                    cells_in_range = tree.query(Point(x + center_offset, y + center_offset).buffer(measure_rad))
+                    num_cells = len(cells_in_range)
+        
+                    if num_cells > 0:
+            
+                        tile = Polygon.from_bounds(x, y,
+                                x + grid_size, y + grid_size)
 
+                        # add tiles (tiles are specialized detection objects drawn without border)
 
+                        detection = entry.hierarchy.add_tile(roi=tile, measurements=
+                                                     {f'tumor cell count within {measure_rad} pixels': num_cells})
+        
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: added {len(entry.hierarchy.detections)} tiles for {os.path.basename(path)}")
+
+            
+
+# +
 if __name__ == '__main__':
     #setup arguments
-
-    run_tiles = True
-    #in_dir = "../data_in"
-    #out_dir = "../out"
     
     args = argparser.parse_args()
     
+    run_tiles = args.use_tiles
     in_dir = args.in_dir
     out_dir = args.out_dir
     
-    tile_size = args.tile_size
-    padding = args.padding_size
+    
     
     pred_gridsize = args.measurement_grid_size
 
-    kernel_rad = args.blurr_flat_rad
+    
     
     #in_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/slides_in"
     #out_dir = "/home/vita/Documents/Digital_Pathology/Project/out/ServerRuns/estim_run_1/estim/out"
-    #tile_size = 2000
-    #padding = 500
-    #pred_gridsize = 1000
-    #kernel_rad = 200
     
-    blurr_dir = out_dir + f"/blurr_{kernel_rad}/"
     qupath_out_dir = out_dir + f"/qupath_{pred_gridsize}"
     if not os.path.exists(qupath_out_dir):
         os.makedirs(qupath_out_dir)
+        
+    if run_tiles:
+        tile_size = args.tile_size
+        padding = args.padding_size
+        kernel_rad = args.blurr_flat_rad
+        
+        blurr_dir = out_dir + f"/blurr_{kernel_rad}/"
+        qupath_from_tile_masks(in_dir, blurr_dir, qupath_out_dir, tile_size, padding, pred_gridsize)
+        
+    else:
+        measure_rad = args.count_rad
+        hover_dir = out_dir + "/hover/"
+        qupath_from_json(in_dir, hover_dir, qupath_out_dir, pred_gridsize, measure_rad)   
     
-    qupath_from_tile_masks(in_dir, blurr_dir, qupath_out_dir, tile_size, padding, pred_gridsize)
+    
+    
+# -
 
 

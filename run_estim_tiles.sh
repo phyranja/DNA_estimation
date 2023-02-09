@@ -37,6 +37,6 @@ done
 
 python generate_masks.py -c estim_config.conf
 python blurr_masks.py -c estim_config.conf
-python generate_qupath.py -c estim_config.conf
+python generate_qupath.py -c estim_config.conf --use_tiles True
 
 echo \done
