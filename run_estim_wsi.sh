@@ -18,7 +18,7 @@ python hover_net/run_infer.py \
         wsi \
         --input_dir="$in_dir" \
         --output_dir="$hover_out_dir" \
-        --mem_usage=0.1
+        
 
 # END
 
