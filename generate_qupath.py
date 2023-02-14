@@ -22,7 +22,8 @@ from shapely.geometry import Point
 import util.args as argparser
 
 
-# +
+# -
+
 def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding, grid_size):
 
     crop = int(padding/2)
@@ -74,9 +75,8 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
         
             print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
             
-            
 
-# +
+
 def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, measure_rad):
     
     with QuPathProject(out_dir, mode='w') as qp:
@@ -134,7 +134,7 @@ def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, measure_rad):
         
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: added {len(entry.hierarchy.detections)} tiles for {os.path.basename(path)}")
 
-            
+
 
 # +
 if __name__ == '__main__':

@@ -40,12 +40,15 @@ ENV LD_LIBRARY_PATH /usr/local/cuda-10.2/lib64:/usr/local/cuda-10.2/extras/CUPTI
 #RUN conda env create -f environment.yml
 #RUN conda activate hovernet
 #RUN apt-get install openslide-tools
+ARG a=1
 RUN pip install --upgrade pip
 RUN pip install protobuf==3.19.6
 RUN pip install pillow==8.4
 RUN pip install opencv-python
+RUN pip install configargparse
 RUN pip install shapely
 RUN pip install geojson
+RUN pip install ijson
 RUN pip install paquo
 RUN paquo get_qupath --install-path /opt 0.3.2
 
@@ -60,7 +63,7 @@ RUN pip install openslide-python==1.1.2
 RUN pip install torch==1.6.0 torchvision==0.7.0
 RUN pip install numpy==1.23.1
 RUN pip install cupy-cuda102
-RUN pip install configargparse
+
 
 
 ARG y=2
