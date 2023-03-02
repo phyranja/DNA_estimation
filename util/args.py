@@ -45,13 +45,20 @@ def parse_args():
     #measurment radius
     parser.add_argument('--blurr_flat_rad', help="pixel radius of flat kernel",
                         default=200, type=int)
-    parser.add_argument('--count_rad', help="pixel radius for cell counting",
-                        default=1000, type=int)
+    cont_rad = parser.add_mutually_exclusive_group()
+    cont_rad.add_argument('--count_rad_px', nargs='+',
+                          help="pixel radius for cell counting",
+                          default=[1000], type=int)
+    cont_rad.add_argument('--count_rad_mu', nargs='+',
+                          help="micron radius for cell counting",
+                          type=int)
     
     
     #QuPath
-    parser.add_argument('--measurement_grid_size', help="gidsize for output measurement tiles",
+    grid_size = parser.add_mutually_exclusive_group()
+    grid_size.add_argument('--measurement_grid_size_px', help="gridsize for output measurement tiles in pixels",
                         default=500, type=int)
+    grid_size.add_argument('--measurement_grid_size_mu', help="gridsize for output measurement tiles in microns", type=int)
     
     args_parsed = parser.parse_args()
     return args_parsed
@@ -61,3 +68,5 @@ if __name__ == '__main__':
 
     x = parse_args()
     print(x)
+
+
