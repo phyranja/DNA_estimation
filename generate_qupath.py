@@ -31,7 +31,7 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
 
     crop = int(padding/2)
     
-    with QuPathProject(out_dir, mode='x') as qp:
+    with QuPathProject(out_dir, mode='w') as qp:
     
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Creating QuPath project", qp.name, flush=True)
     
@@ -64,23 +64,33 @@ def qupath_from_tile_masks(wsi_dir, blurr_tile_dir, out_dir, tile_size, padding,
         
 
                 for y, x in itertools.product(range(0, width-padding, grid_size),
-                                                range(0, hight-padding, grid_size)):
+                                              range(0, hight-padding, grid_size)):
         
-                    if np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size]) > 0:
+                    if np.mean(im[y+crop:y+crop+grid_size,
+                                  x+crop:x+crop + grid_size]) > 0:
             
-                        tile = Polygon.from_bounds(x + crop + offset_x, y + crop + offset_y,
-                                x + crop + offset_x + grid_size, y + crop + offset_y + grid_size)
+                        tile = Polygon.from_bounds(x + crop + offset_x,
+                                                   y + crop + offset_y,
+                                                   x + crop + offset_x + grid_size,
+                                                   y + crop + offset_y + grid_size)
 
                         # add tiles (tiles are specialized detection objects drawn without border)
 
-                        detection = entry.hierarchy.add_tile(roi=tile, measurements=
-                                                     {'tumor cell density': np.mean(im[y+crop:y+crop+grid_size, x+crop:x+crop + grid_size]/255)})
+                        detection = entry.hierarchy.add_tile(roi=tile,
+                                        measurements={'tumor cell density':
+                                                np.mean(im[y+crop:
+                                                           y+crop+grid_size,
+                                                           x+crop:x+crop+grid_size]
+                                                        /255)})
         
-            print("added", len(entry.hierarchy.detections), "tiles for ", os.path.basename(path))
+            print("added", len(entry.hierarchy.detections),
+                  "tiles for ", os.path.basename(path))
 
 
 
-def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, grid_in_mu, measure_rads, rad_in_mu):
+def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, grid_in_mu,
+                     measure_rads, rad_in_mu,min_density, min_density_in_mu2,
+                     min_ratio):
     
     with QuPathProject(out_dir, mode='w') as qp:
     
@@ -100,8 +110,10 @@ def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, grid_in_mu, measure
             
             if grid_in_mu:
                 osh = openslide.OpenSlide(path)
-                grid_size_x = ceil(grid_size / float(osh.properties["openslide.mpp-x"]))
-                grid_size_y = ceil(grid_size / float(osh.properties["openslide.mpp-y"]))
+                grid_size_x = ceil(grid_size / 
+                                   float(osh.properties["openslide.mpp-x"]))
+                grid_size_y = ceil(grid_size / 
+                                   float(osh.properties["openslide.mpp-y"]))
             else:
                 grid_size_x = grid_size
                 grid_size_y = grid_size
@@ -109,7 +121,7 @@ def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, grid_in_mu, measure
             if rad_in_mu:
                 osh = openslide.OpenSlide(path)
                 #ToDo make oval
-                measure_rads_px = [ceil(rad / float(osh.properties["openslide.mpp-x"]))
+                measure_rads_px = [ceil(rad/float(osh.properties["openslide.mpp-x"]))
                                    for rad in measure_rads]
                 detection_text_count = [f'tumor cell count within {rad} microns'
                                         for rad in measure_rads]
@@ -129,7 +141,18 @@ def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, grid_in_mu, measure
                                   for rad in measure_rads]
                 max_count_text = [f'max tumor cell count within {rad} pixels'
                                   for rad in measure_rads]
-                
+            
+            if min_density_in_mu2:
+                osh = openslide.OpenSlide(path)
+                osh.properties["openslide.mpp-x"]
+                                   
+                min_tumor_counts = [ceil(rad**2*np.pi*
+                                         float(osh.properties["openslide.mpp-x"])**2
+                                         *min_density)
+                                   for rad in measure_rads_px]
+            else:
+                min_tumor_counts = [ceil(rad**2*np.pi*min_density)
+                                   for rad in measure_rads_px]
                 
         
             json_file = hover_dir + wsi_name + ".json"
@@ -163,56 +186,77 @@ def qupath_from_json(wsi_dir, hover_dir, out_dir, grid_size, grid_in_mu, measure
                 max_ratio_coords = np.zeros((len(measure_rads_px),2))
                 max_ratio = np.zeros(len(measure_rads_px))
                 
-                for x, y in tqdm(list(itertools.product(range(0, entry.width, grid_size_x),
-                                                range(0, entry.height, grid_size_y)))):
+                for x, y in tqdm(list(itertools.product(
+                        range(0, entry.width, grid_size_x),
+                        range(0, entry.height, grid_size_y)))):
                     
                     num_cells_tot = np.zeros(len(measure_rads_px))
                     num_cells_tumor = np.zeros(len(measure_rads_px))
                     tumor_cell_ratio = np.zeros(len(measure_rads_px))
                     for i in range(len(measure_rads_px)):
-                        cells_in_range = cell_tree.query(Point(x + center_offset, y + center_offset).buffer(measure_rads_px[i]))
+                        cells_in_range = cell_tree.query(
+                            Point(x + center_offset,y + center_offset)
+                            .buffer(measure_rads_px[i]))
+                        
                         num_cells_tot[i] = len(cells_in_range)
-                        tumor_cells_in_range = tumor_tree.query(Point(x + center_offset, y + center_offset).buffer(measure_rads_px[i]))
+                        tumor_cells_in_range = tumor_tree.query(
+                            Point(x + center_offset, y + center_offset).
+                            buffer(measure_rads_px[i]))
+                        
                         num_cells_tumor[i] = len(tumor_cells_in_range)
-                        tumor_cell_ratio[i] = num_cells_tumor[i]/num_cells_tot[i] if num_cells_tot[i] else 0
+                        tumor_cell_ratio[i] = (num_cells_tumor[i]/num_cells_tot[i] 
+                                               if num_cells_tot[i] else 0)
                         
                         
                     if any(num_cells_tumor):
                             
                         
-                        tile = Polygon.from_bounds(x, y, x + grid_size_x, y + grid_size_y)
+                        tile = Polygon.from_bounds(x, y,
+                                                   x + grid_size_x, y + grid_size_y)
                         
-                        tile_measurements = {detection_text_count[i]: num_cells_tumor[i] 
-                                       for i in range(len(num_cells_tumor))}
+                        tile_measurements = {detection_text_count[i]:
+                                             num_cells_tumor[i] 
+                                             for i in range(len(num_cells_tumor))}
                         
-                        tile_measurements.update({detection_text_ratio[i]: tumor_cell_ratio[i]
-                                             for i in range(len(num_cells_tumor))})
+                        tile_measurements.update({detection_text_ratio[i]: 
+                                                  tumor_cell_ratio[i] for i 
+                                                  in range(len(num_cells_tumor))})
                         
                         for i in range(len(tumor_cell_ratio)):
-                            if tumor_cell_ratio[i] > 0.3 and num_cells_tumor[i] >= 200:
-                                tile_measurements[detection_text_ratio[i] + ">0.3, min 200 cells"] = tumor_cell_ratio[i]
+                            if (tumor_cell_ratio[i] > min_ratio and 
+                                num_cells_tumor[i] >= min_tumor_counts[i]):
+                                tile_measurements[detection_text_ratio[i]+">0.3, min "
+                                                  + str(min_tumor_counts[i]) + 
+                                                  " cells"] = tumor_cell_ratio[i]
                                 
                                 if max_tumor_cell_count[i] < num_cells_tumor[i]:
                                     max_tumor_cell_count[i] = num_cells_tumor[i]
-                                    max_tumor_cell_count_coords[i] = [x + center_offset, y + center_offset]
+                                    max_tumor_cell_count_coords[i] = [x+center_offset,
+                                                                      y+center_offset]
                                 if max_ratio[i] < tumor_cell_ratio[i]:
                                     max_ratio[i] = tumor_cell_ratio[i]
-                                    max_ratio_coords[i] = [x + center_offset, y + center_offset]
+                                    max_ratio_coords[i] = [x + center_offset,
+                                                           y + center_offset]
                         
-                        tile_measurements.update({"total cell count" + str(i): num_cells_tot[i]
-                                             for i in range(len(num_cells_tumor))})
+                        #tile_measurements.update({"total cell count" + str(i): num_cells_tot[i]
+                        #                     for i in range(len(num_cells_tumor))})
                     
 
                         # add tiles (tiles are specialized detection objects drawn without border)
                         detection = entry.hierarchy.add_tile(roi=tile, measurements=
-                                                     tile_measurements)
+                                                             tile_measurements)
                         #detection = entry.hierarchy.add_tile(roi=Point(x + center_offset, y + center_offset).buffer(measure_rads_px), measurements=
                         #                             {"yy" : num_cells_tot[0]})
                 for i in range(len(measure_rads_px)):
-                    entry.hierarchy.add_tile(roi=Point(max_ratio_coords[i]).buffer(measure_rads_px[i]), measurements=
-                                            {max_ratio_text[i] : max_ratio[i]})
-                    entry.hierarchy.add_tile(roi=Point(max_tumor_cell_count_coords[i]).buffer(measure_rads_px[i]), measurements=
-                                            {max_count_text[i] : max_tumor_cell_count[i]})
+                    entry.hierarchy.add_tile(roi=Point(max_ratio_coords[i])
+                                             .buffer(measure_rads_px[i]),
+                                             measurements={max_ratio_text[i] : 
+                                                           max_ratio[i]})
+                    
+                    entry.hierarchy.add_tile(roi=Point(max_tumor_cell_count_coords[i])
+                                             .buffer(measure_rads_px[i]),
+                                             measurements={max_count_text[i] :
+                                                           max_tumor_cell_count[i]})
                         
             
             print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: added {len(entry.hierarchy.detections)} tiles for {os.path.basename(path)}")
@@ -237,8 +281,22 @@ if __name__ == '__main__':
         pred_gridsize = args.measurement_grid_size_mu
         gridsize_in_mu = True
         
-        
-    print(pred_gridsize, gridsize_in_mu)
+    #print(pred_gridsize, gridsize_in_mu)
+    
+    
+    if args.min_density_px:
+        min_density_in_mu2 = False
+        min_density = args.min_density_px
+    elif args.min_density_mu2:
+        min_density = args.min_density_mu2
+        min_density_in_mu2 = True
+    elif args.min_density_rad_05: #needs to stay last, as it is the default
+        min_density = args.min_density_rad_05/(500**2*np.pi)
+        min_density_in_mu2 = True
+    
+    print(args.min_density_px, args.min_density_mu2, args.min_density_rad_05)
+    print(min_density, min_density_in_mu2)   
+    
 
     
     
@@ -264,9 +322,12 @@ if __name__ == '__main__':
             measure_rad = args.count_rad_mu
             rad_in_mu = True
         
+        min_ratio = args.min_ratio
         hover_dir = out_dir + "/hover/"
-        qupath_from_json(in_dir, hover_dir, qupath_out_dir, pred_gridsize, gridsize_in_mu,
-                         measure_rad, rad_in_mu)   
+        qupath_from_json(in_dir, hover_dir, qupath_out_dir,
+                         pred_gridsize, gridsize_in_mu,
+                         measure_rad, rad_in_mu,
+                         min_density, min_density_in_mu2, min_ratio)   
     
     
     

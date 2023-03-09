@@ -60,6 +60,15 @@ def parse_args():
                         default=500, type=int)
     grid_size.add_argument('--measurement_grid_size_mu', help="gridsize for output measurement tiles in microns", type=int)
     
+    density = parser.add_mutually_exclusive_group()
+    density.add_argument('--min_density_px', help="Minimal cancer cells per pixel", type=float)
+    density.add_argument('--min_density_mu2', help="Minimal cancer cells per square micron", type=float)
+    density.add_argument('--min_density_rad_05', help="Minimal cancer cells within 0.5mm radius (~0.79mm^2)",
+                         default=200, type=float)
+    
+    parser.add_argument('--min_ratio', help="Minimal cancer cell ratio",
+                         default=0.3, type=float)
+    
     args_parsed = parser.parse_args()
     return args_parsed
 
