@@ -3,6 +3,7 @@ from tqdm import tqdm
 import openslide
 import cv2
 import os
+import glob
 import itertools
 import math
 
@@ -76,3 +77,69 @@ def save_wsi_tiles(osh, tile_size, padding, save_folder, force_rewrite = False):
                                                    tile_size + padding))
                 cv2.imwrite(tile_name, cv2.cvtColor(asnumpy(tile), cv2.COLOR_RGB2BGR))
                 del tile
+
+                
+def get_file_list(file_dir):
+    path_list = glob.glob(file_dir + "/*")
+    file_path_list = [p for p in path_list if os.path.isfile(p)]
+    file_path_list.sort()
+    return file_path_list
+
+
+
+### convert microns to pixels if needed:
+
+#gridsize from microns per pixel
+def get_grid_size_px(grid_size, grid_in_mu, mpp_x, mpp_y):
+    
+    if grid_in_mu:
+        grid_size_x = math.ceil(grid_size /float(mpp_x))
+        grid_size_y = math.ceil(grid_size / float(mpp_y))
+    else:
+        grid_size_x = grid_size
+        grid_size_y = grid_size
+        
+    return (grid_size_x, grid_size_y)
+
+#gridsize from a QuPath image entry
+def get_grid_size_px_from_qupath(qupath_entry, grid_size, grid_in_mu):
+    
+    return get_grid_size_px(grid_size, grid_in_mu,
+                            float(qupath_entry._image_server.getMetadata().getPixelWidthMicrons()),
+                            float(qupath_entry._image_server.getMetadata().getPixelHeightMicrons()))
+
+#gridsize from an Openslide handel
+def get_grid_size_px_from_openslide(osh, grid_size, grid_in_mu):
+    return get_grid_size_px(grid_size, grid_in_mu,
+                            float(osh.properties["openslide.mpp-x"]),
+                            float(osh.properties["openslide.mpp-y"]))
+
+
+
+### get output directories
+
+def get_hover_dir(base_dir, make_dir = False):
+    hover_dir = base_dir.rstrip("/") + "/hover"
+    if make_dir and not os.path.exists(hover_dir):
+        os.makedirs(hover_dir)
+    return hover_dir
+        
+def get_measure_dir(base_dir, make_dir = False):
+    measure_dir = base_dir.rstrip("/") + "/measure"
+    if make_dir and not os.path.exists(measure_dir):
+        os.makedirs(measure_dir)
+    return measure_dir
+
+def get_qupath_dir(base_dir, grid_size, grid_size_in_mu, make_dir = False):
+    qupath_dir = base_dir.rstrip("/") + "/qupath_" + str(grid_size)
+    if make_dir and not os.path.exists(qupath_dir):
+        os.makedirs(qupath_dir)  
+    return qupath_dir
+
+### get file names and other strings
+
+def get_npy_measure_name(grid_size, grid_size_in_mu, radius, rad_in_mu, prefix):
+    return f"{prefix}_grid={grid_size}{'mu' if grid_size_in_mu else 'px'}_rad={radius}{'mu' if rad_in_mu else 'px'}"
+
+def get_npy_coord_name(grid_size, grid_size_in_mu):
+    return f"coords_grid={grid_size}{'mu' if grid_size_in_mu else 'px'}"

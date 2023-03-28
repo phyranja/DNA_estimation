@@ -1,6 +1,7 @@
 from configargparse import ArgParser
 
 
+
 def parse_args():
     
     parser = ArgParser()
@@ -71,6 +72,9 @@ def parse_args():
     
     args_parsed = parser.parse_args()
     return args_parsed
+
+
+    
 
 if __name__ == '__main__':
     #setup arguments

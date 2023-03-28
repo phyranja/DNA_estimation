@@ -1,11 +1,25 @@
-#!/bin/sh
+#!/bin/bash
 
-in_dir=../data_in
-out_dir=../out
+#extract in_dir and out_dir from args for hovernet inference
+i=1
+for arg in "$@" 
+do
+    i=$((i + 1));
+    case "$arg" in
+    --in_dir)
+      in_dir="${!i}"
+      ;;
+    --out_dir)
+      out_dir=${!i}
+      ;;
+    esac 
+done
 
+
+#this should result in the same directory as util.util.get_hover_dir
 hover_out_dir="$out_dir"/hover/
 
-# : <<'END'
+#: <<'END'
 python hover_net/run_infer.py \
         --gpu=0 \
         --nr_types=6 \
@@ -20,8 +34,9 @@ python hover_net/run_infer.py \
         --output_dir="$hover_out_dir" \
         
 
-# END
+#END
 
-python generate_qupath.py -c estim_config.conf --use_tiles False
+python generate_measurments.py "$@"
+python generate_qupath.py "$@"
 
 echo \done

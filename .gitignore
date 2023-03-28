@@ -2,6 +2,7 @@ hover/
 hover_cpu/
 checkpoints/
 test/
+out/
 
 test*
 
